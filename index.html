@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>タスクをしぽぽぽーん！</title>
+<meta name="description" content="小さな一歩が、ふわふわの奇跡になる。タスク管理×妖精育成×科学のやさしいゲーム。">
+<meta name="theme-color" content="#cbe8ff">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="しぽぽ">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<!-- ===== 世界（背景の層） ===== -->
+<div id="world" class="t-day">
+  <div class="sky"></div>
+  <div class="stars"></div>
+  <div class="sun"></div>
+  <div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div>
+  <svg class="hills far" viewBox="0 0 1200 300" preserveAspectRatio="none"><path d="M0 220 C150 140 300 170 420 190 C560 214 640 120 800 140 C940 158 1040 200 1200 160 L1200 300 L0 300Z"/></svg>
+  <svg class="hills near" viewBox="0 0 1200 300" preserveAspectRatio="none"><path d="M0 240 C200 200 320 230 480 220 C640 210 760 180 920 210 C1040 232 1120 220 1200 214 L1200 300 L0 300Z"/></svg>
+  <div class="lake"><div class="shimmer"></div></div>
+  <div class="ground"></div>
+  <div id="plants" class="plants"></div>
+  <canvas id="particles"></canvas>
+</div>
+
+<!-- ===== 上のバー ===== -->
+<header id="topbar">
+  <div class="logo" id="logoBtn"><span class="logo-a">タスクを</span><span class="logo-b">しぽぽぽーん！</span></div>
+  <div class="top-right">
+    <button class="ptbar" id="ptBar" title="ポイント・おみせ">✨ <b id="ptNum">0</b></button>
+    <div class="seeds" id="seedBar" title="元素のたね"></div>
+    <button class="icon-btn" id="bgmBtn" aria-label="BGM" onclick="toggleBGM()">🎵</button>
+    <button class="icon-btn" id="settingsBtn" aria-label="せってい">⚙️</button>
+  </div>
+</header>
+
+<!-- ===== 画面 ===== -->
+<main id="screens">
+  <section id="home" class="screen active">
+    <div id="homeStage" class="stage"></div>
+    <div class="home-card glass" id="homeCard"></div>
+  </section>
+  <section id="task" class="screen"><div class="panel glass" id="taskPanel"></div></section>
+  <section id="fusion" class="screen"><div class="panel glass" id="fusionPanel"></div></section>
+  <section id="collection" class="screen"><div class="panel glass" id="collectionPanel"></div></section>
+  <section id="island" class="screen"><div class="island-wrap" id="islandPanel"></div></section>
+  <section id="activity" class="screen"><div class="panel glass" id="activityPanel"></div></section>
+  <section id="shop" class="screen"><div class="panel glass" id="shopPanel"></div></section>
+  <section id="science" class="screen"><div class="panel glass" id="sciencePanel"></div></section>
+</main>
+
+<!-- ===== 下のメニュー ===== -->
+<nav id="nav">
+  <button data-go="home" class="on"><span class="ni">🏡</span><span>せかい</span></button>
+  <button data-go="task"><span class="ni">📝</span><span>タスク</span></button>
+  <button data-go="fusion"><span class="ni">⚗️</span><span>ラボ</span></button>
+  <button data-go="collection"><span class="ni">📖</span><span>ずかん</span></button>
+  <button data-go="island"><span class="ni">🏝️</span><span>しま</span></button>
+  <button data-go="activity"><span class="ni">🛁</span><span>あそぶ</span></button>
+  <button data-go="science"><span class="ni">🔬</span><span>ノート</span></button>
+</nav>
+
+<!-- ===== 誕生演出 ===== -->
+<div id="birth" class="overlay hidden">
+  <canvas id="birthCanvas"></canvas>
+  <div class="birth-orb" id="birthOrb"></div>
+  <div class="birth-text" id="birthText"></div>
+  <div class="birth-result" id="birthResult"></div>
+  <button class="skip" id="birthSkip">スキップ ▶▶</button>
+</div>
+
+<div id="modal" class="overlay hidden"><div class="modal-card glass" id="modalCard"></div></div>
+<div id="toast"></div>
+
+<script src="js/data.js"></script>
+<script src="js/fairy.js"></script>
+<script src="js/store.js"></script>
+<script src="js/music.js"></script>
+<script src="js/world.js"></script>
+<script src="js/items.js"></script>
+<script src="js/screens.js"></script>
+<script src="js/island.js"></script>
+<script src="js/shop.js"></script>
+<script src="js/activity.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
