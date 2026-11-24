@@ -4,6 +4,7 @@ const $ = (s, r = document) => r.querySelector(s);
 let loops = [], tick = 0, mode = null;
 const clearLoops = () => { loops.forEach(clearInterval); loops.forEach(clearTimeout); loops = []; clearInterval(tick); };
 const bathToday = () => S.bath.filter(b => b.pt && todayStr(new Date(b.at)) === todayStr()).length;
+const hhmm = t => { const d = new Date(t); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; };
 const mmss = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;
 function buddy(){
   const own = S.fairies.filter(f => SPECIES_BY_ID[f.sp].fam !== 'molecule');
@@ -28,7 +29,7 @@ window.renderActivity = function(){
     <div class="row" id="buddyRow">${(own.length ? own : ['shizukun']).slice(-10).map(id => `<button class="chip ${pickedSp.id===id?'on':''}" data-bud="${id}"><span style="width:26px;height:26px;display:inline-block">${fairySVG(SPECIES_BY_ID[id])}</span>${esc(SPECIES_BY_ID[id].name)}${own.length?'':'（おきゃくさん）'}</button>`).join('')}</div>
     <h3>これまでの記録</h3>
     <div class="hist">${[...S.bath.map(x => ({...x, k:'bath'})), ...S.runs.map(x => ({...x, k:'run'}))].sort((a,b) => b.at - a.at).slice(0, 12).map(x =>
-      x.k === 'bath' ? `<div><span>🛁 ${fmtDate(x.at)} おふろ</span><span>${x.sec ? mmss(x.sec) : ''}</span></div>`
+      x.k === 'bath' ? `<div><span>🛁 ${fmtDate(x.at)} おふろ</span><span>${hhmm(x.at)} にあがったよ${x.pt ? ' ✨+' + x.pt : ''}</span></div>`
       : `<div><span>🏃 ${fmtDate(x.at)} ラン</span><span>${mmss(x.sec)}${x.km ? ' ・ ' + x.km + 'km' : ''}</span></div>`).join('') || '<div><span>まだ記録はありません。気が向いたときにどうぞ。</span></div>'}</div>`;
   $('#goBath').onclick = startBath;
   $('#goRun').onclick = startRun;
@@ -52,7 +53,7 @@ function startBath(){
       <div class="surface" id="bSurf"></div>
       <div class="tubfront"></div><div class="feetL"></div><div class="feetR"></div>
     </div>
-    <div class="timer-big" id="bTime" style="font-size:18px;opacity:.6">00:00</div>
+    <div class="timer-big" id="bTime" style="font-size:18px;opacity:.6">いま ${hhmm(Date.now())}</div>
     <div class="ctrl"><button class="btn soft" id="bBack">もどる</button><button class="btn mint big pochi" id="bOut">🛁 おふろあがった！ポチッ</button></div>
     <div id="bFact" style="margin-top:12px"></div>`;
   const F = $('#bF'), scene = $('#bScene');
@@ -82,7 +83,7 @@ function startBath(){
   });
   // タイマー（任意）
   const t0 = Date.now();
-  tick = setInterval(() => { $('#bTime').textContent = mmss((Date.now() - t0) / 1000); }, 500);
+  tick = setInterval(() => { $('#bTime').textContent = 'いま ' + hhmm(Date.now()); }, 5000);
 
   function bubble(){
     const b = document.createElement('div'); b.className = 'bub';
@@ -120,7 +121,7 @@ function startBath(){
       if (can) { addPoints(POINT_RULES.bath, 'おふろぽーん！'); addSeeds({ H: 2, O: 1 }); }
       if (!$('#bFact').innerHTML) { const i = Math.floor(Math.random() * BATH_FACTS.length); const f = BATH_FACTS[i]; learnFact('bath:' + i); $('#bFact').innerHTML = `<div class="fact-card"><span class="tag">おふろの科学</span><b>${esc(f.t)}</b>　${esc(f.s)}<div class="line">「${esc(f.line)}」</div></div>`; }
       $('#bFact').insertAdjacentHTML('afterbegin', `<div class="fact-card" style="margin-bottom:10px;text-align:center">ぽかぽか、ふわふわ。${esc(sp.name)}も ごきげんです。${can ? `<div class="seed-gain" style="margin-top:4px">+${POINT_RULES.bath}pt と 元素のたね ${atomSVG('H')}×2 ${atomSVG('O')}×1</div>` : '<div class="sub" style="margin:4px 0 0">きょうのポイントはもう満タン。ぽかぽかの記録はちゃんと残したよ。</div>'}</div>`);
-      $('#bTime').textContent = mmss(sec);
+      $('#bTime').style.opacity = 1; $('#bTime').style.fontSize = '26px'; $('#bTime').textContent = hhmm(Date.now()) + ' にあがったよ 🛁';
       p.querySelector('.ctrl').innerHTML = `<button class="btn" id="bDone">もどる</button>`;
       $('#bDone').onclick = renderActivity;
     }, 900);

@@ -288,6 +288,7 @@ function showResult(opts){
     <div class="bname">${esc(sp.name)}</div>
     <div style="font-size:12px;color:var(--ink2)">${esc(FAMILIES[sp.fam].name)}　｜　${esc(sp.pers)}</div>
     <div class="fact-card"><span class="tag">科学のひみつ</span>${esc(fact.s)}<div class="line">「${esc(fact.line)}」</div></div>
+    ${opts.extra || ''}
     ${seeds ? `<div class="seed-gain">元素のたねをもらったよ ${seeds}</div>` : ''}
     <div class="row" style="justify-content:center"><button class="btn" id="birthOk">いっしょにくらす ♪</button></div>`;
   bres.classList.add('show');

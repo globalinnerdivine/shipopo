@@ -252,7 +252,7 @@ select.input,input[type=date].input,input[type=time].input,input[type=number].in
 
 /* ===== ラボ ===== */
 .lab-top{display:grid;grid-template-columns:1fr;gap:12px}
-.atoms{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.atoms{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:6px}
 .atom-btn{background:rgba(255,255,255,.75);border-radius:18px;padding:6px 2px;display:flex;flex-direction:column;align-items:center;border:1.5px solid #fff;position:relative;transition:transform .15s}
 .atom-btn:active{transform:scale(.92)}
 .atom-btn .atom-svg{width:44px;height:44px}
@@ -261,7 +261,7 @@ select.input,input[type=date].input,input[type=time].input,input[type=number].in
 .atom-btn .info{position:absolute;right:2px;top:2px;width:18px;height:18px;border-radius:50%;font-size:10px;background:#f0eaff;font-weight:800}
 .atom-btn.empty{opacity:.4}
 .atom-svg .orbit{animation:tw 2s ease-in-out infinite alternate}
-.flask{position:relative;height:230px;border-radius:30px;background:radial-gradient(circle at 50% 60%,rgba(255,255,255,.9),rgba(235,225,255,.6));border:2px solid #fff;overflow:hidden;box-shadow:inset 0 -20px 40px rgba(190,170,255,.25)}
+.flask{position:relative;height:260px;border-radius:30px;background:radial-gradient(circle at 50% 60%,rgba(255,255,255,.9),rgba(235,225,255,.6));border:2px solid #fff;overflow:hidden;box-shadow:inset 0 -20px 40px rgba(190,170,255,.25)}
 .flask .in-atom{position:absolute;width:66px;height:66px;margin:-33px 0 0 -33px;transition:left .8s cubic-bezier(.5,0,.3,1.3),top .8s cubic-bezier(.5,0,.3,1.3),transform .3s;cursor:pointer;animation:bob 2.4s ease-in-out infinite}
 .flask .in-atom .atom-svg{width:100%;height:100%}
 .flask.react{animation:shake .12s linear infinite}
@@ -491,3 +491,32 @@ body.zen .zen-exit{display:inline-flex}
 .icon-btn.off{opacity:.55}
 .save-box{background:linear-gradient(160deg,#effff8,#eef5ff);border:1.5px solid #fff;border-radius:18px;padding:10px 12px;font-size:13px;font-weight:700}
 @media (max-width:480px){.icon-btn{width:32px;height:32px;font-size:15px}.top-right{gap:5px}}
+
+/* ===== ラボ（パワーアップ） ===== */
+.lab-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.hk-face{width:84px;height:84px;flex-shrink:0;cursor:pointer;animation:bob 3s ease-in-out infinite}
+.hk-face.hop{animation:surp .6s ease}
+.hk-bubble{flex:1;position:relative;background:#fff;border-radius:20px;padding:10px 14px;font-size:13px;font-weight:700;line-height:1.6;box-shadow:0 4px 14px rgba(140,110,200,.18);min-height:46px}
+.hk-bubble::before{content:'';position:absolute;left:-10px;top:20px;border:6px solid transparent;border-right:8px solid #fff}
+.hk-bubble.pop{animation:screenIn .35s cubic-bezier(.2,.9,.3,1.3)}
+.lab-rank{display:flex;flex-direction:column;align-items:center;background:linear-gradient(160deg,#fff7d6,#efe6ff);border-radius:18px;padding:6px 10px;border:1.5px solid #fff;text-align:center;flex-shrink:0}
+.lab-rank small{font-size:10px;color:var(--ink2);font-weight:700}.lab-rank b{font-size:13px;color:#8a5fe0}
+@media (max-width:520px){.lab-head{flex-wrap:wrap}.lab-rank{flex-direction:row;gap:6px;width:100%;justify-content:center}.hk-face{width:66px;height:66px}}
+.bond-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.flask .in-atom{z-index:1}
+.flask.many .in-atom{width:48px;height:48px;margin:-24px 0 0 -24px}
+.bl{stroke:#c7a6ff;stroke-width:4;stroke-linecap:round;vector-effect:non-scaling-stroke;opacity:0;animation:fadeB .5s ease forwards}
+.bl.ion{stroke:#ffb86b;stroke-dasharray:4 6;animation:fadeB .5s ease forwards,ionB 1s linear infinite}
+@keyframes fadeB{to{opacity:1}}
+@keyframes ionB{to{stroke-dashoffset:-20}}
+.el{fill:#fff;filter:drop-shadow(0 0 2px #c7a6ff)}
+.bond-label{position:absolute;left:50%;bottom:10px;transform:translateX(-50%) scale(.6);opacity:0;background:#fff;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:800;color:#8a5fe0;box-shadow:0 4px 12px rgba(150,120,230,.3);transition:all .4s cubic-bezier(.3,1.6,.5,1);white-space:nowrap;z-index:2}
+.bond-label.on{opacity:1;transform:translateX(-50%) scale(1)}
+.recipe{text-align:left;border:1.5px solid #fff;cursor:default}
+button.recipe{cursor:pointer;transition:transform .15s}button.recipe:active{transform:scale(.96)}
+.recipe .mat{font-size:11px;color:var(--ink2)}
+.mol-card{background:linear-gradient(160deg,#fffbe6,#f3ecff);border-radius:18px;padding:10px 14px;font-size:12.5px;line-height:1.7;text-align:left;border:1.5px solid #fff}
+.mol-card span{font-size:11px;background:#fff;border-radius:999px;padding:1px 8px;color:#8a5fe0;font-weight:800}
+.bohr-wrap{display:flex;gap:12px;align-items:center;background:rgba(240,234,255,.6);border-radius:18px;padding:10px;margin-top:10px}
+.bohr{width:150px;height:150px;flex-shrink:0}
+.orbit-spin{animation:spin 8s linear infinite}

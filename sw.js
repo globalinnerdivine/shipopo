@@ -1,7 +1,7 @@
 // オフラインでも開けるようにするための仕組み（ファイルを端末にとっておく）
-const CACHE = 'shipopo-v3';
+const CACHE = 'shipopo-v4';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'css/style.css',
-  'js/data.js', 'js/fairy.js', 'js/store.js', 'js/music.js', 'js/world.js', 'js/items.js', 'js/screens.js', 'js/island.js', 'js/shop.js', 'js/activity.js', 'js/main.js',
+  'js/data.js', 'js/fairy.js', 'js/store.js', 'js/music.js', 'js/world.js', 'js/items.js', 'js/screens.js', 'js/lab.js', 'js/island.js', 'js/shop.js', 'js/activity.js', 'js/main.js',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });

@@ -122,6 +122,32 @@ const MOLS = {
       <rect x="22" y="34" width="76" height="46" rx="16" fill="url(#${g}b)"/>
       <path d="${hex(42,57,11)} ${hex(61,57,11)} ${hex(80,57,11)}" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2"/>`, face:[60,56,0.75] };
   },
+  // オゾン：3つの酸素が少し曲がってならぶ
+  mol_o3: g => ({ body: atom(26,84,19,'#ffc4c4',g,'O') + atom(94,84,19,'#ffc4c4',g,'O') + atom(60,60,27,'#c8dcff',g,''), face:[60,58,0.8] }),
+  // 一酸化炭素：2つ
+  mol_co: g => ({ body: atom(40,66,25,'#c7c9d4',g,'C') + atom(80,66,22,'#ffc4c4',g,'O'), face:[44,64,0.75] }),
+  // 塩化水素：小さなHと大きなCl
+  mol_hcl: g => ({ body: atom(26,70,15,'#e4e9ff',g,'H') + atom(70,64,31,'#d6f7b8',g,''), face:[72,62,0.85] }),
+  // 水酸化ナトリウム：Na⁺ と OH⁻
+  mol_naoh: g => ({ body: atom(28,72,20,'#ffe08a',g,'Na⁺') + atom(72,60,26,'#ffd0c4',g,'') + atom(102,40,12,'#e4e9ff',g,'H') + `<text x="88" y="98" font-size="11" font-weight="800" fill="rgba(60,60,90,.5)">OH⁻</text>`, face:[72,58,0.75] }),
+  // エタノール：C-C-O のつながりと水素
+  mol_ethanol: g => ({ body: [[14,44],[16,90],[30,24],[56,26],[60,104],[106,46]].map(([x,y])=>atom(x,y,10,'#e4e9ff',g,'')).join('') + atom(36,66,19,'#c7c9d4',g,'') + atom(94,68,18,'#ffc4c4',g,'O') + atom(64,64,23,'#ddd0ff',g,''), face:[64,62,0.7] }),
+  // 炭酸カルシウム：貝がらの形 + Ca
+  mol_caco3: g => ({ body: `<path d="M60 22 C30 22 14 50 18 78 C22 100 98 100 102 78 C106 50 90 22 60 22Z" fill="url(#${g}a)"/>
+      <path d="M60 24 L60 96 M60 24 L36 94 M60 24 L84 94 M60 24 L22 80 M60 24 L98 80" stroke="${'#f0c2b0'}" stroke-width="2.5" opacity=".7"/>
+      <path d="M60 22 C30 22 14 50 18 78 C22 100 98 100 102 78 C106 50 90 22 60 22Z" fill="none" stroke="#fff" stroke-width="2"/>` + atom(96,30,11,'#f4efe4',g,'Ca'), face:[60,70,0.8] }),
+  // 酸化鉄：さびっぽいかたまり
+  mol_fe2o3: g => ({ body: atom(26,82,15,'#ffc4c4',g,'O') + atom(94,82,15,'#ffc4c4',g,'O') + atom(60,28,15,'#ffc4c4',g,'O') + atom(38,62,24,'#d9a184',g,'') + atom(82,62,24,'#d9a184',g,'') + `<ellipse cx="60" cy="70" rx="26" ry="22" fill="url(#${g}a)"/>`, face:[60,68,0.75] }),
+  // 硫化水素：水とにた形（すこし角度がせまい）
+  mol_h2s: g => ({ body: atom(32,90,15,'#e4e9ff',g,'H') + atom(88,90,15,'#e4e9ff',g,'H') + atom(60,60,31,'#fff2a0',g,'') + `<path d="M40 22 C36 14 44 10 42 2 M60 20 C56 12 64 8 62 0 M80 22 C76 14 84 10 82 2" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" opacity=".8"/>`, face:[60,58,0.85] }),
+  // 酸化マグネシウム：白い結晶
+  mol_mgo: g => {
+    let s = '';
+    [[38,48],[60,48],[82,48],[38,70],[60,70],[82,70],[38,92],[60,92],[82,92]].forEach((p,i)=>{ const mg = i%2===0; s += atom(p[0],p[1], mg?10:12, mg?'#e6edf7':'#ffc4c4', g, ''); });
+    return { body: `<circle cx="60" cy="70" r="54" fill="#fff7c9" opacity=".35"/><rect x="24" y="34" width="72" height="72" rx="14" fill="rgba(255,255,255,.7)" stroke="rgba(170,190,220,.7)" stroke-width="2"/>` + s + `<circle cx="60" cy="70" r="20" fill="rgba(255,255,255,.8)"/>`, face:[60,70,0.7] };
+  },
+  // ヘリウム：ひとりで浮かぶ風船
+  mol_he: g => ({ body: `<path d="M60 92 C56 100 66 106 60 116 C56 122 62 126 60 130" stroke="#c9b6ff" stroke-width="2" fill="none"/><path d="M54 92 L66 92 L60 86Z" fill="#ff9cd0"/>` + atom(60,56,36,'#ffd6f0',g,''), face:[60,54,1] }),
   // ダイヤモンド：宝石の形
   mol_diamond: g => ({ body: `
       <path d="M34 34 L86 34 L104 56 L60 108 L16 56Z" fill="url(#${g}b)" stroke="rgba(255,255,255,.9)" stroke-width="2"/>
@@ -147,6 +173,7 @@ function accessory(acc, sp, g){
     case 'antenna': return `<g class="sway" stroke="#9bc94a" stroke-width="2.5" fill="none" stroke-linecap="round"><path d="M50 30 C46 18 40 14 36 12"/><path d="M70 30 C74 18 80 14 84 12"/></g><circle cx="36" cy="12" r="5" fill="#eaff8a" class="glow-dot"/><circle cx="84" cy="12" r="5" fill="#eaff8a" class="glow-dot"/>`;
     case 'nightcap': return `<path d="M34 40 C36 14 70 6 88 22 C96 30 100 40 102 50 C94 36 82 30 72 30 C60 30 46 34 34 40Z" fill="#b9c4ff"/><circle cx="103" cy="52" r="6" fill="#fff"/><path d="M34 40 C50 32 70 30 86 34" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/>`;
     case 'crack': return `<path d="M30 60 L42 54 L50 62 L60 52 L70 62 L80 54 L90 60" stroke="${c3}" stroke-width="2.5" fill="none" stroke-linejoin="round"/>`;
+    case 'hakase': return `<g><path d="M30 34 L60 20 L90 34 L60 46Z" fill="#6b5fa0"/><rect x="48" y="36" width="24" height="10" rx="3" fill="#6b5fa0"/><path d="M88 34 L92 50" stroke="#ffd36b" stroke-width="2.5"/><circle cx="92" cy="52" r="3.5" fill="#ffd36b"/></g>`;
     case 'cherry': return `<circle cx="62" cy="30" r="9" fill="#ff5e7e"/><ellipse cx="59" cy="27" rx="3" ry="2" fill="#fff" opacity=".8"/><path d="M62 22 C62 14 68 10 72 8" stroke="#6b9b4c" stroke-width="2" fill="none"/>`;
     default: return '';
   }
@@ -267,6 +294,7 @@ window.fairySVG = function(sp, opt = {}){
   const acc = accessory(sp.acc, sp, g);
   const ringBack = sp.acc==='ring' ? `<ellipse cx="60" cy="72" rx="56" ry="14" fill="none" stroke="${sp.c3}" stroke-width="5" opacity=".5" transform="rotate(-12 60 72)"/>` : '';
   const isFrontAcc = ['ring'].includes(sp.acc);
+  const glasses = sp.acc === 'hakase' ? `<g fill="rgba(255,255,255,.25)" stroke="#6b5fa0" stroke-width="2.6"><circle cx="${fx-15*k}" cy="${fy-2*k}" r="${12*k}"/><circle cx="${fx+15*k}" cy="${fy-2*k}" r="${12*k}"/><path d="M${fx-3*k} ${fy-3*k} L${fx+3*k} ${fy-3*k}" fill="none"/></g><path d="M${fx-6} ${fy+26*k} L${fx} ${fy+22*k} L${fx+6} ${fy+26*k} L${fx} ${fy+30*k}Z M${fx-6} ${fy+26*k} L${fx-12} ${fy+21*k} L${fx-12} ${fy+31*k}Z M${fx+6} ${fy+26*k} L${fx+12} ${fy+21*k} L${fx+12} ${fy+31*k}Z" fill="#ff8fb6"/>` : '';
 
   const faceSvg = (MOLS[sp.shape] && sp.shape==='mol_nacl')
     ? `<circle cx="${fx}" cy="${fy}" r="20" fill="rgba(255,255,255,.75)"/>` + face(sp, fx, fy, k, mood)
@@ -276,7 +304,7 @@ window.fairySVG = function(sp, opt = {}){
     ? `<g filter="url(#${g}s)" opacity=".9">${ringBack}${feet}${limbs}${extra}${body}${isFrontAcc?'':acc}${isFrontAcc?acc:''}</g>
        <defs><filter id="${g}s"><feColorMatrix type="matrix" values="0 0 0 0 0.55  0 0 0 0 0.52  0 0 0 0 0.72  0 0 0 1 0"/></filter></defs>
        <text x="60" y="76" text-anchor="middle" font-size="30" font-weight="800" fill="rgba(255,255,255,.85)">?</text>`
-    : `${ringBack}<g class="feet">${feet}</g>${extra}<g class="limbs">${limbs}</g><g class="bodyg">${body}</g>${isFrontAcc?'':acc}<g class="face">${faceSvg}</g>${isFrontAcc?acc:''}`;
+    : `${ringBack}<g class="feet">${feet}</g>${extra}<g class="limbs">${limbs}</g><g class="bodyg">${body}</g>${isFrontAcc?'':acc}<g class="face">${faceSvg}${glasses}</g>${isFrontAcc?acc:''}`;
 
   return `<svg class="fairy-svg" viewBox="-6 -6 132 128" xmlns="http://www.w3.org/2000/svg">${defs}${inner}</svg>`;
 };
