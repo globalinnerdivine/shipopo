@@ -520,3 +520,42 @@ button.recipe{cursor:pointer;transition:transform .15s}button.recipe:active{tran
 .bohr-wrap{display:flex;gap:12px;align-items:center;background:rgba(240,234,255,.6);border-radius:18px;padding:10px;margin-top:10px}
 .bohr{width:150px;height:150px;flex-shrink:0}
 .orbit-spin{animation:spin 8s linear infinite}
+
+/* ===== せかい：さわれる妖精 ===== */
+.stage{touch-action:none}
+.fy{touch-action:none;-webkit-user-select:none;user-select:none}
+.fy .shadow{transition:opacity .2s}
+.fy.st-held .inner{animation:dangle 1s ease-in-out infinite;transform-origin:50% 10%}
+.fy.st-held .foot.fl{animation:stepA .25s ease-in-out infinite alternate}
+.fy.st-held .foot.fr{animation:stepA .25s ease-in-out infinite alternate-reverse}
+.fy.st-held .hand.hl,.fy.st-held .hand.hr{animation:armWave .35s ease-in-out infinite alternate}
+@keyframes dangle{0%,100%{transform:rotate(-7deg) scale(1.04,.98)}50%{transform:rotate(7deg) scale(.98,1.05)}}
+@keyframes armWave{to{transform:translateY(-6px)}}
+.fy.st-air .inner{transform:scale(.96,1.06)}
+.fy.st-pet .inner{animation:petWiggle .6s ease-in-out infinite}
+@keyframes petWiggle{0%,100%{transform:scale(1.04,.96)}50%{transform:scale(.97,1.03) rotate(2deg)}}
+.fy.st-dizzy .inner{animation:dizzyW 1s ease-in-out infinite}
+@keyframes dizzyW{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+.dizzy{position:absolute;left:50%;top:-14px;transform:translateX(-50%);font-size:12px;color:#ffcf4d;letter-spacing:4px;text-shadow:0 0 4px #fff;animation:spinXY 1s linear infinite;white-space:nowrap;pointer-events:none}
+@keyframes spinXY{0%{transform:translateX(-50%) scaleX(1)}50%{transform:translateX(-50%) scaleX(-1)}100%{transform:translateX(-50%) scaleX(1)}}
+.fy.squash .inner{animation:squashA .45s cubic-bezier(.3,1.6,.5,1)!important}
+@keyframes squashA{0%{transform:scale(1.3,.7) translateY(8px)}55%{transform:scale(.9,1.12)}100%{transform:none}}
+.fy.windy .inner{animation:windyA 1.5s ease-in-out!important}
+@keyframes windyA{20%{transform:skewX(-10deg) translateX(-4px)}50%{transform:skewX(6deg)}80%{transform:skewX(-3deg)}}
+.fairy-svg .look{transition:transform .25s ease-out}
+.tap-spark{position:absolute;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:radial-gradient(#fff,rgba(255,220,240,.6));box-shadow:0 0 8px #fff;pointer-events:none;animation:tapSp .8s ease-out forwards;z-index:950}
+@keyframes tapSp{to{transform:translate(var(--dx),var(--dy)) scale(.2);opacity:0}}
+/* 奥行き */
+.hills.far{transform:translate(calc(var(--px,0) * -10px),calc(var(--py,0) * -4px));transition:transform .6s ease-out}
+.hills.near{transform:translate(calc(var(--px,0) * -22px),calc(var(--py,0) * -8px));transition:transform .6s ease-out}
+.sun{translate:calc(var(--px,0) * -6px) calc(var(--py,0) * -4px);transition:all 2s,translate .6s ease-out}
+.stars{translate:calc(var(--px,0) * -4px) calc(var(--py,0) * -3px)}
+/* ながれぼし */
+.shoot{position:absolute;width:120px;height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(255,255,255,0),#fff);transform:rotate(18deg);animation:shoot 1.4s ease-out forwards;pointer-events:none;filter:drop-shadow(0 0 4px #fff)}
+@keyframes shoot{0%{opacity:0;translate:0 0}10%{opacity:1}100%{opacity:0;translate:260px 90px}}
+/* かぜ */
+.plants.gust .plant{animation-duration:.7s!important}
+.petal{position:absolute;left:-20px;width:10px;height:7px;border-radius:60% 0;pointer-events:none;animation:petalF 3.6s ease-in forwards;z-index:3}
+@keyframes petalF{0%{translate:0 0;rotate:0deg}100%{translate:calc(100vw + 60px) var(--dy);rotate:720deg}}
+.home-bfly{position:absolute;width:20px;height:18px;transition:left 2.6s ease-in-out,top 2.6s ease-in-out,opacity 1s;pointer-events:none}
+.home-bfly .wing{transform-origin:12px 10px;animation:flapW .25s ease-in-out infinite alternate}

@@ -63,11 +63,14 @@ setInterval(applyTime, 60000);
 })();
 
 // =========================================================
-// ホームの妖精たち
+// ホームの妖精たち（さわって、つかんで、なげて遊べる）
 // =========================================================
 const stage = document.getElementById('homeStage');
 let agents = [];
 const FLYERS = ['sky', 'space'];
+const pointer = { x: -1, y: -1, t: 0 };
+const W = () => stage.clientWidth || innerWidth, H = () => stage.clientHeight || innerHeight;
+const bandTop = () => H() * .62, bandBot = () => H() * .86;
 
 function makeAgent(f){
   const sp = SPECIES_BY_ID[f.sp];
@@ -78,17 +81,15 @@ function makeAgent(f){
   el.style.setProperty('--s', size + 'px');
   el.innerHTML = `<div class="shadow"></div><div class="inner">${fairySVG(sp)}</div>`;
   stage.appendChild(el);
-  const W = stage.clientWidth || innerWidth, H = stage.clientHeight || innerHeight;
-  const a = { f, sp, el, size, x: rand(.08, .82) * W, y: 0, tx: 0, ty: 0, state: 'float', t: rand(1, 4), mood: 'normal', flier: FLYERS.includes(sp.fam), vx: 0 };
-  a.y = groundY(a, H);
-  a.tx = a.x; a.ty = a.y;
-  el.addEventListener('click', ev => { ev.stopPropagation(); tapAgent(a); });
+  const a = { f, sp, el, size, x: rand(.08, .82) * W(), y: 0, tx: 0, ty: 0, vx: 0, vy: 0, state: 'float', t: rand(1, 4), mood: 'normal', flier: FLYERS.includes(sp.fam), air: false, held: false, floor: 0 };
+  a.y = groundY(a); a.floor = a.y + (a.hover || 0); a.tx = a.x; a.ty = a.y;
+  bindDrag(a);
   return a;
 }
-function groundY(a, H){
-  H = H || stage.clientHeight;
-  if (a.flier && Math.random() < .5) return rand(.28, .55) * H;
-  return rand(.64, .84) * H - a.size;
+function groundY(a){
+  a.hover = 0;
+  if (a.flier && Math.random() < .5) { const y = rand(.28, .55) * H(); a.hover = rand(.64, .84) * H() - a.size - y; return y; }
+  return rand(.64, .84) * H() - a.size;
 }
 function setMood(a, mood){
   if (a.mood === mood) return;
@@ -97,11 +98,13 @@ function setMood(a, mood){
 }
 function setState(a, s, t){
   a.state = s; a.t = t;
-  a.el.className = 'fy st-' + s + (a.vx < 0 ? ' flip' : '');
+  a.el.className = 'fy st-' + s + (a.vx < 0 ? ' flip' : '') + (a.held ? ' held' : '');
   a.el.querySelector('.zzz')?.remove();
+  a.el.querySelector('.dizzy')?.remove();
   if (s === 'sleep') { setMood(a, 'sleep'); a.el.insertAdjacentHTML('beforeend', '<div class="zzz">z<small>z</small></div>'); }
-  else if (s === 'look' || s === 'jump') setMood(a, 'happy');
-  else if (s === 'surprise' || s === 'fall') setMood(a, 'surprise');
+  else if (s === 'look' || s === 'jump' || s === 'pet') setMood(a, 'happy');
+  else if (s === 'surprise' || s === 'fall' || s === 'held' || s === 'air') setMood(a, 'surprise');
+  else if (s === 'dizzy') { setMood(a, 'surprise'); a.el.insertAdjacentHTML('beforeend', '<div class="dizzy">✦ ✧ ✦</div>'); }
   else setMood(a, 'normal');
 }
 function say(a, text, ms = 2200){
@@ -111,8 +114,16 @@ function say(a, text, ms = 2200){
 }
 function heart(a, ch = '💗'){
   const h = document.createElement('div'); h.className = 'heart'; h.textContent = ch;
-  h.style.left = (a.x + a.size/2 - 8) + 'px'; h.style.top = (a.y - 4) + 'px';
+  h.style.left = (a.x + a.size/2 - 8 + rand(-14, 14)) + 'px'; h.style.top = (a.y - 4) + 'px';
   stage.appendChild(h); setTimeout(() => h.remove(), 1200);
+}
+function sparkleAt(x, y, n = 10){
+  for (let i = 0; i < n; i++) {
+    const s = document.createElement('div'); s.className = 'tap-spark';
+    s.style.left = x + 'px'; s.style.top = y + 'px';
+    const ang = i / n * Math.PI * 2; s.style.setProperty('--dx', Math.cos(ang) * rand(26, 50) + 'px'); s.style.setProperty('--dy', Math.sin(ang) * rand(26, 50) + 'px');
+    stage.appendChild(s); setTimeout(() => s.remove(), 800);
+  }
 }
 function tapAgent(a){
   sfx('po');
@@ -122,62 +133,186 @@ function tapAgent(a){
   else if (r < .75) { setState(a, 'look', 2); say(a, pick(['なあに？', 'えへへ', 'あそぼ！', a.sp.food + 'すき！', 'ぽん！'])); }
   else { setState(a, 'surprise', 1); say(a, 'わっ！'); }
   heart(a);
-  // まわりの子も反応する
-  agents.forEach(b => { if (b !== a && Math.abs(b.x - a.x) < 160 && b.state !== 'sleep' && Math.random() < .5) { b.vx = a.x - b.x; setState(b, 'look', 1.6); } });
+  agents.forEach(b => { if (b !== a && Math.abs(b.x - a.x) < 160 && b.state !== 'sleep' && !b.air && Math.random() < .5) { b.vx = a.x - b.x; setState(b, 'look', 1.6); } });
+}
+
+// ----- つかむ・なでる・なげる -----
+function bindDrag(a){
+  let start = null, hist = [], petT = 0, moved = false;
+  a.el.addEventListener('pointerdown', e => {
+    e.stopPropagation(); e.preventDefault();
+    try { a.el.setPointerCapture(e.pointerId); } catch(_) {}
+    const r = stage.getBoundingClientRect();
+    start = { px: e.clientX, py: e.clientY, ox: e.clientX - r.left - a.x, oy: e.clientY - r.top - a.y, t: performance.now() };
+    hist = [{ x: e.clientX, y: e.clientY, t: performance.now() }]; moved = false;
+    clearTimeout(petT);
+    petT = setTimeout(() => { if (start && !moved) pet(a); }, 550);
+  });
+  a.el.addEventListener('pointermove', e => {
+    if (!start) return;
+    const dist = Math.hypot(e.clientX - start.px, e.clientY - start.py);
+    if (!moved && dist > 8 && a.state !== 'pet') { moved = true; grab(a); }
+    if (a.state === 'pet') { if (dist > 6 && Math.random() < .12) heart(a, pick(['💗','💕','✨'])); return; }
+    if (!a.held) return;
+    const r = stage.getBoundingClientRect();
+    a.gx = e.clientX - r.left - start.ox; a.gy = e.clientY - r.top - start.oy;
+    hist.push({ x: e.clientX, y: e.clientY, t: performance.now() }); if (hist.length > 6) hist.shift();
+  });
+  const up = () => {
+    if (!start) return;
+    clearTimeout(petT);
+    if (a.held) {
+      const h0 = hist[0], h1 = hist[hist.length - 1], dt = Math.max(16, h1.t - h0.t) / 1000;
+      release(a, (h1.x - h0.x) / dt, (h1.y - h0.y) / dt);
+    } else if (a.state === 'pet') { setState(a, 'look', 1.5); say(a, 'もっとなでて〜'); }
+    else if (!moved) tapAgent(a);
+    start = null;
+  };
+  a.el.addEventListener('pointerup', up);
+  a.el.addEventListener('pointercancel', up);
+}
+function pet(a){
+  sfx('soft'); setState(a, 'pet', 99); say(a, pick(['なでなで〜', 'ふわぁ…きもちいい', 'えへへ〜', 'ごろごろ…']), 1800);
+  for (let i = 0; i < 3; i++) setTimeout(() => heart(a, pick(['💗','💕'])), i * 200);
+}
+function grab(a){
+  a.held = true; a.air = false; a.friend = null; a.gx = a.x; a.gy = a.y;
+  setState(a, 'held', 99); sfx('tap');
+  say(a, pick(['わわっ！', 'たかーい！', 'どこいくの？', 'ふわ〜', 'きゃー♪']), 1500);
+  agents.forEach(b => { if (b !== a && !b.air && b.state !== 'sleep' && Math.random() < .5) { setState(b, 'look', 2); if (Math.random() < .3) say(b, pick(['いいなぁ', 'わたしも〜', 'がんばれ〜'])); } });
+}
+function release(a, vx, vy){
+  a.held = false;
+  const sp = Math.hypot(vx, vy);
+  a.vx = Math.max(-1600, Math.min(1600, vx)); a.vy = Math.max(-1600, Math.min(1600, vy));
+  // 着地する場所：はなしたところの真下（地面の帯の中）
+  a.floor = Math.max(bandTop() - a.size * .2, Math.min(bandBot() - a.size, a.y + (a.y < bandTop() - a.size ? rand(0, bandBot() - bandTop()) : 0)));
+  if (a.y > a.floor) a.floor = Math.min(bandBot() - a.size, a.y);
+  a.hover = 0;
+  if (a.flier && sp < 600) a.floor = Math.min(a.floor, a.y);
+  if (sp > 900) { a.spin = (vx > 0 ? 1 : -1) * Math.min(720, sp * .5); say(a, 'ひゅーーん！', 1200); }
+  a.air = true; setState(a, 'air', 99);
+}
+function land(a, impact){
+  a.air = false; a.vx = 0; a.vy = 0; a.spin = 0; a.rot = 0;
+  a.el.querySelector('.inner').style.rotate = '';
+  a.el.classList.remove('squash'); void a.el.offsetWidth; a.el.classList.add('squash');
+  setTimeout(() => a.el.classList.remove('squash'), 500);
+  if (impact > 1100) { setState(a, 'dizzy', 2.2); say(a, 'くらくら〜'); sfx('soft'); }
+  else if (impact > 500) { setState(a, 'jump', 1.4); say(a, pick(['ぽよん！', 'たのしかった！', 'もういっかい！'])); sfx('po'); }
+  else { setState(a, 'look', 1.4); say(a, pick(['ここ、いいね', 'とうちゃく！', 'ふぅ'])); }
+  // 近くの子とぶつかったら、いっしょにびっくり
+  agents.forEach(b => { if (b !== a && !b.air && Math.abs(b.x - a.x) < a.size * .7 && Math.abs(b.y - a.y) < a.size * .6) { setState(b, 'surprise', 1); say(b, 'わっ！', 1200); b.x += (b.x > a.x ? 1 : -1) * a.size * .5; } });
+  a.tx = a.x; a.ty = a.y;
 }
 
 function choose(a){
-  const W = stage.clientWidth, H = stage.clientHeight;
   const night = world.classList.contains('t-night');
   const r = Math.random();
   const sleepy = night ? .35 : .12;
   if (r < sleepy) return setState(a, 'sleep', rand(6, 14));
   if (r < sleepy + .1 && agents.length > 1) {
-    // なかまのところへ（追いかけっこ or くっつく）
-    const b = pick(agents.filter(x => x !== a));
-    a.friend = b; a.chase = Math.random() < .5;
-    a.tx = b.x + (Math.random() < .5 ? -1 : 1) * b.size * .7; a.ty = b.y;
-    a.vx = a.tx - a.x;
-    return setState(a, 'walk', 6);
+    const b = pick(agents.filter(x => x !== a && !x.air && !x.held));
+    if (b) {
+      a.friend = b; a.chase = Math.random() < .5;
+      a.tx = b.x + (Math.random() < .5 ? -1 : 1) * b.size * .7; a.ty = b.y;
+      a.vx = a.tx - a.x;
+      return setState(a, 'walk', 6);
+    }
   }
   if (r < sleepy + .16) return setState(a, 'look', 2.2);
   if (r < sleepy + .22) return setState(a, 'jump', 1.4);
   if (r < sleepy + .55) return setState(a, 'float', rand(2, 5));
   a.friend = null;
-  a.tx = Math.max(4, Math.min(W - a.size - 4, a.x + rand(-260, 260)));
-  a.ty = groundY(a, H);
+  a.tx = Math.max(4, Math.min(W() - a.size - 4, a.x + rand(-260, 260)));
+  a.ty = groundY(a);
   a.vx = a.tx - a.x;
   setState(a, 'walk', 8);
 }
+// よんだら来てくれる
+function callTo(x, y){
+  agents.forEach(a => {
+    if (a.air || a.held || a.state === 'pet') return;
+    const d = Math.abs(a.x + a.size / 2 - x);
+    if (d > 280) return;
+    if (a.state === 'sleep' && Math.random() < .6) return;
+    a.friend = null; a.chase = d > 140;
+    a.tx = Math.max(4, Math.min(W() - a.size - 4, x - a.size / 2 + rand(-50, 50)));
+    a.ty = Math.max(bandTop() - a.size * .2, Math.min(bandBot() - a.size, y - a.size * .8));
+    a.vx = a.tx - a.x; setState(a, 'walk', 5);
+    if (Math.random() < .4) say(a, pick(['よんだ？', 'いまいく〜', 'なになに？']), 1400);
+  });
+}
 
-let last = performance.now();
+let last = performance.now(), lookTick = 0;
 function tick(now){
   const dt = Math.min(.05, (now - last) / 1000); last = now;
   if (document.getElementById('home').classList.contains('active')) {
+    lookTick++;
     for (const a of agents) {
-      a.t -= dt;
-      if (a.state === 'walk') {
-        if (a.friend) { a.tx = a.friend.x + (a.x < a.friend.x ? -1 : 1) * a.friend.size * .72; a.ty = a.friend.y; }
-        const dx = a.tx - a.x, dy = a.ty - a.y, d = Math.hypot(dx, dy);
-        const sp = (a.chase ? 90 : 42) * dt;
-        if (d < 4) {
-          if (a.friend) {
-            if (a.chase) { setState(a, 'jump', 1.4); setState(a.friend, a.friend.state === 'sleep' ? 'sleep' : 'jump', 1.4); say(a, 'つかまえた！'); }
-            else { setState(a, 'look', 3); heart(a, pick(['💗','✨','🫧'])); say(a, 'くっつき〜'); }
-            a.friend = null;
-          } else setState(a, 'float', rand(1.5, 4));
-        } else {
-          a.x += dx / d * Math.min(sp, d); a.y += dy / d * Math.min(sp, d);
-          if (Math.random() < .0008) { setState(a, 'fall', 1.6); say(a, 'ころん…'); }
+      // つかまれているとき：ゆびにふんわりついてくる
+      if (a.held) {
+        a.x += (a.gx - a.x) * Math.min(1, dt * 18); a.y += (a.gy - a.y) * Math.min(1, dt * 18);
+      } else if (a.air) {
+        // なげられたとき：重力・かべではねる・着地
+        const g = a.flier ? 900 : 2400;
+        a.vy += g * dt; a.vx *= (1 - dt * (a.flier ? 1.6 : .6));
+        if (a.flier) a.vy *= (1 - dt * 1.2);
+        a.x += a.vx * dt; a.y += a.vy * dt;
+        if (a.spin) { a.rot = (a.rot || 0) + a.spin * dt; a.spin *= (1 - dt * .8); a.el.querySelector('.inner').style.rotate = a.rot + 'deg'; }
+        if (a.x < 0) { a.x = 0; a.vx = Math.abs(a.vx) * .6; sfx('po'); }
+        if (a.x > W() - a.size) { a.x = W() - a.size; a.vx = -Math.abs(a.vx) * .6; sfx('po'); }
+        if (a.y < 40) { a.y = 40; a.vy = Math.abs(a.vy) * .4; }
+        if (a.y >= a.floor && a.vy > 0) {
+          a.y = a.floor;
+          const impact = a.vy;
+          if (impact > 420 && !a.flier) { a.vy = -impact * .42; a.vx *= .7; a.el.classList.remove('squash'); void a.el.offsetWidth; a.el.classList.add('squash'); sfx('po'); a.bounces = (a.bounces || 0) + 1; if (a.bounces > 3) { a.bounces = 0; land(a, 0); } }
+          else { a.bounces = 0; land(a, impact + (a.lastImpact || 0)); }
+          a.lastImpact = impact;
+        }
+      } else {
+        a.t -= dt;
+        if (a.state === 'walk') {
+          if (a.friend) { if (a.friend.air || a.friend.held) a.friend = null; else { a.tx = a.friend.x + (a.x < a.friend.x ? -1 : 1) * a.friend.size * .72; a.ty = a.friend.y; } }
+          const dx = a.tx - a.x, dy = a.ty - a.y, d = Math.hypot(dx, dy);
+          const spd = (a.chase ? 90 : 42) * dt;
+          if (d < 4) {
+            if (a.friend) {
+              if (a.chase) { setState(a, 'jump', 1.4); if (a.friend.state !== 'sleep') setState(a.friend, 'jump', 1.4); say(a, 'つかまえた！'); }
+              else { setState(a, 'look', 3); heart(a, pick(['💗','✨','🫧'])); say(a, 'くっつき〜'); }
+              a.friend = null;
+            } else setState(a, 'float', rand(1.5, 4));
+          } else {
+            a.x += dx / d * Math.min(spd, d); a.y += dy / d * Math.min(spd, d);
+            if (Math.random() < .0008) { setState(a, 'fall', 1.6); say(a, 'ころん…'); }
+          }
+        }
+        if (a.state === 'sleep' && Math.random() < .002) { a.el.classList.add('st-roll'); setTimeout(() => a.el.classList.remove('st-roll'), 2400); }
+        if (a.t <= 0) {
+          if (a.state === 'fall') { setState(a, 'surprise', .8); say(a, 'えへへ'); }
+          else if (a.state === 'dizzy') { setState(a, 'look', 1.5); say(a, 'えへへ、もういっかい！'); }
+          else choose(a);
         }
       }
-      if (a.state === 'sleep' && Math.random() < .002) { a.el.classList.add('st-roll'); setTimeout(() => a.el.classList.remove('st-roll'), 2400); }
-      if (a.t <= 0) {
-        if (a.state === 'fall') { setState(a, 'surprise', .8); say(a, 'えへへ'); }
-        else choose(a);
-      }
       a.el.style.transform = `translate(${a.x}px, ${a.y}px)`;
-      a.el.style.zIndex = Math.round(a.y + a.size);
+      a.el.style.zIndex = a.held || a.air ? 900 : Math.round(a.y + a.size);
+      // かげ：空中にいるほど、うすく小さく
+      const h = Math.max(0, (a.air || a.held ? a.floor : a.y + (a.hover || 0)) - a.y);
+      const sh = a.el.firstChild; sh.style.transform = `translateY(${h}px) scale(${Math.max(.35, 1 - h / 400)})`; sh.style.opacity = Math.max(.25, 1 - h / 300);
+      // 目がゆびを追いかける
+      if (lookTick % 3 === 0) {
+        const lk = a.el.querySelector('.look');
+        if (lk) {
+          let tx = pointer.x, ty = pointer.y;
+          const heldOne = agents.find(b => b.held || b.air);
+          if (heldOne && heldOne !== a) { tx = heldOne.x + heldOne.size / 2; ty = heldOne.y + heldOne.size / 2; }
+          if (tx >= 0 && now - pointer.t < 4000 || heldOne) {
+            const cx = a.x + a.size / 2, cy = a.y + a.size / 2, dx = tx - cx, dy = ty - cy, dd = Math.hypot(dx, dy) || 1;
+            const m = Math.min(1, dd / 200) * 3.2, flip = a.el.classList.contains('flip') ? -1 : 1;
+            lk.style.transform = `translate(${(dx / dd * m * flip).toFixed(2)}px, ${(dy / dd * m).toFixed(2)}px)`;
+          } else lk.style.transform = '';
+        }
+      }
     }
   }
   requestAnimationFrame(tick);
@@ -185,23 +320,65 @@ function tick(now){
 requestAnimationFrame(tick);
 
 window.renderHomeFairies = function(){
-  stage.innerHTML = ''; agents = [];
+  stage.querySelectorAll('.fy,.empty-hint').forEach(x => x.remove()); agents = [];
   const list = S.fairies.slice(-14);
   list.forEach(f => agents.push(makeAgent(f)));
   if (!list.length) {
-    stage.innerHTML = `<div class="empty-hint glass" style="padding:18px 22px;border-radius:24px">
+    stage.insertAdjacentHTML('beforeend', `<div class="empty-hint glass" style="padding:18px 22px;border-radius:24px">
       <div style="font-size:34px">✨</div><div style="font-weight:800;margin:6px 0">まだ、だれもいないみたい</div>
       <div class="sub" style="margin:0">タスクをひとつ終えると<br>粒子の向こうから妖精がやってきます</div>
-      <button class="btn" style="margin-top:12px" onclick="go('task')">タスクを見る</button></div>`;
+      <button class="btn" style="margin-top:12px" onclick="go('task')">タスクを見る</button></div>`);
   }
+  showHowTo();
 };
-stage.addEventListener('click', e => {
+function showHowTo(){
+  if (S.seenTouchHelp || !agents.length) return;
+  S.seenTouchHelp = true; save();
+  setTimeout(() => toast('しぽぽをタップ・長おし（なでなで）・ドラッグしてなげてみてね'), 1500);
+}
+stage.addEventListener('pointerdown', e => {
   if (e.target !== stage) return;
-  // 何もないところをタップ：近くの子がこっちを見る
-  const r = stage.getBoundingClientRect(); const x = e.clientX - r.left;
-  sfx('tap');
-  agents.forEach(a => { if (Math.abs(a.x + a.size/2 - x) < 220 && a.state !== 'sleep') { a.vx = x - a.x; setState(a, 'look', 1.8); } });
+  const r = stage.getBoundingClientRect(); const x = e.clientX - r.left, y = e.clientY - r.top;
+  sfx('tap'); sparkleAt(x, y);
+  if (y > bandTop() - 60) callTo(x, y);
+  else agents.forEach(a => { if (Math.abs(a.x + a.size/2 - x) < 260 && a.state !== 'sleep' && !a.air && !a.held) { a.vx = x - a.x; setState(a, 'look', 1.8); } });
 });
+addEventListener('pointermove', e => { const r = stage.getBoundingClientRect(); pointer.x = e.clientX - r.left; pointer.y = e.clientY - r.top; pointer.t = performance.now();
+  // 背景の奥行き（パララックス）
+  const px = (e.clientX / innerWidth - .5), py = (e.clientY / innerHeight - .5);
+  world.style.setProperty('--px', px.toFixed(3)); world.style.setProperty('--py', py.toFixed(3));
+}, { passive: true });
+
+// ----- 世界の小さなできごと -----
+function shootingStar(){
+  if (!world.classList.contains('t-night') || !document.getElementById('home').classList.contains('active')) return;
+  const s = document.createElement('div'); s.className = 'shoot';
+  s.style.left = rand(10, 70) + '%'; s.style.top = rand(4, 30) + '%';
+  world.appendChild(s); setTimeout(() => s.remove(), 1600);
+  const a = agents.find(x => x.state !== 'sleep' && !x.air && !x.held);
+  if (a && Math.random() < .5) { setState(a, 'look', 2); say(a, 'ながれぼし！ おねがいごと…'); }
+}
+setInterval(() => { if (Math.random() < .5) shootingStar(); }, 7000);
+function gust(){
+  if (!document.getElementById('home').classList.contains('active') || document.hidden) return;
+  const plants = document.getElementById('plants'); plants.classList.add('gust'); setTimeout(() => plants.classList.remove('gust'), 3200);
+  const cols = ['#ffc2dc', '#fff0a8', '#d6c8ff', '#bfe6ff', '#c9f3d8'];
+  for (let i = 0; i < 14; i++) {
+    const p = document.createElement('div'); p.className = 'petal';
+    p.style.top = rand(30, 85) + '%'; p.style.background = pick(cols); p.style.animationDelay = rand(0, 1.2) + 's'; p.style.setProperty('--dy', rand(-120, 60) + 'px');
+    world.appendChild(p); setTimeout(() => p.remove(), 4600);
+  }
+  agents.forEach(a => { if (!a.air && !a.held && a.state !== 'sleep' && Math.random() < .4) { a.el.classList.add('windy'); setTimeout(() => a.el.classList.remove('windy'), 1500); } });
+  const a = agents.find(x => x.state !== 'sleep' && !x.air && !x.held);
+  if (a) say(a, pick(['わっ、かぜ！', 'ひゅ〜', 'おはなのかおり〜']));
+}
+setInterval(() => { if (Math.random() < .45) gust(); }, 18000);
+// ひるはちょうちょ
+(function butterflies(){
+  const BF = c => `<svg viewBox="0 0 24 20"><g class="wing"><ellipse cx="7" cy="8" rx="6" ry="7" fill="${c}"/><ellipse cx="17" cy="8" rx="6" ry="7" fill="${c}"/><ellipse cx="8" cy="15" rx="4" ry="4" fill="${c}" opacity=".8"/><ellipse cx="16" cy="15" rx="4" ry="4" fill="${c}" opacity=".8"/></g><rect x="11" y="4" width="2" height="13" rx="1" fill="#6b5fa0"/></svg>`;
+  const bs = [0, 1, 2].map(i => { const b = document.createElement('div'); b.className = 'home-bfly'; b.innerHTML = BF(['#ffc2dc','#fff0a8','#cfe0ff'][i]); b.style.left = rand(10, 90) + '%'; b.style.top = rand(50, 80) + '%'; world.appendChild(b); return b; });
+  setInterval(() => { const day = !world.classList.contains('t-night'); bs.forEach(b => { b.style.opacity = day ? 1 : 0; if (Math.random() < .7) { b.style.left = rand(5, 95) + '%'; b.style.top = rand(45, 85) + '%'; } }); }, 2600);
+})();
 
 // =========================================================
 // 誕生演出「しぽぽぽぽ……ぽーーーん！」

@@ -1,5 +1,5 @@
 // オフラインでも開けるようにするための仕組み（ファイルを端末にとっておく）
-const CACHE = 'shipopo-v4';
+const CACHE = 'shipopo-v5';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'css/style.css',
   'js/data.js', 'js/fairy.js', 'js/store.js', 'js/music.js', 'js/world.js', 'js/items.js', 'js/screens.js', 'js/lab.js', 'js/island.js', 'js/shop.js', 'js/activity.js', 'js/main.js',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];

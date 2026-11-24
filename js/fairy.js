@@ -196,7 +196,7 @@ function eyes(type, fx, fy, k, mood, lid = '#fff'){
     <circle cx="${x + r*0.32}" cy="${ey + ry*0.2}" r="${r*0.15}" fill="#fff"/>
     ${type==='sparkle' ? `<path d="M${x+r*0.25} ${ey-ry*0.6} l${r*0.12} ${r*0.25} ${r*0.25} ${r*0.12} -${r*0.25} ${r*0.12} -${r*0.12} ${r*0.25} -${r*0.12} -${r*0.25} -${r*0.25} -${r*0.12} ${r*0.25} -${r*0.12}Z" fill="#fff"/>` : ''}
     ${type==='sleepy' ? `<path d="M${x-r*1.05} ${ey-ry*0.15} Q${x} ${ey-ry*1.5} ${x+r*1.05} ${ey-ry*0.15} Q${x} ${ey-ry*0.55} ${x-r*1.05} ${ey-ry*0.15}Z" fill="${lid}"/><path d="M${x-r*1.05} ${ey-ry*0.15} Q${x} ${ey-ry*0.55} ${x+r*1.05} ${ey-ry*0.15}" stroke="#3d335a" stroke-width="${1.6*k}" fill="none" stroke-linecap="round"/>` : ''}`;
-  return `<g class="eyes">${one(fx-ex)}${one(fx+ex)}</g>`;
+  return `<g class="look"><g class="eyes">${one(fx-ex)}${one(fx+ex)}</g></g>`;
 }
 
 function face(sp, fx, fy, k, mood){
